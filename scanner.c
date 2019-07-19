@@ -3,6 +3,7 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common.h"
@@ -16,7 +17,47 @@ typedef struct {
 
 Scanner scanner;
 
+typedef struct Node {
+    TokenType tokenType;
+    struct Node* children[26];
+} Node;
+
+static Node* makeNode() {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->tokenType = -1;
+    for (int i = 0; i < 26; ++i) {
+        newNode->children[i] = NULL;
+    }
+    return newNode;
+}
+
+static Node* root = NULL;
+
+static void createKeywordTrie() {
+    static const char* keywords[] = {"and", "class", "def", "else", "false", "for", "if", "nil", "or", "print",
+                                     "return", "super", "this", "true", "var", "while"};
+    static TokenType keywordTokens[] = {TOKEN_AND, TOKEN_CLASS, TOKEN_DEF, TOKEN_ELSE, TOKEN_FALSE, TOKEN_FOR, TOKEN_IF,
+                                        TOKEN_NIL, TOKEN_OR, TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
+                                        TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE};
+    root = makeNode();
+    for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); ++i) {
+        Node* p = root;
+        int len = strlen(keywords[i]);
+        for (int j = 0; j < len; ++j) {
+            char cur = keywords[i][j];
+            if (p->children[cur - 'a'] == NULL) {
+                p->children[cur - 'a'] = makeNode();
+            }
+            p = p->children[cur - 'a'];
+            if (j == len - 1) {
+                p->tokenType = keywordTokens[i];
+            }
+        }
+    }
+}
+
 void initScanner(const char* source) {
+    createKeywordTrie();
     scanner.start = source;
     scanner.current = source;
     scanner.line = 1;
@@ -24,6 +65,10 @@ void initScanner(const char* source) {
 
 static bool isDigit(char c) {
     return '0' <= c && c <= '9';
+}
+
+static bool isAlpha(char c) {
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
 static bool isAtEnd() {
@@ -112,13 +157,35 @@ static Token number() {
     return makeToken(TOKEN_NUMBER);
 }
 
+static TokenType identifierType() {
+    Node* p = root;
+    int len = scanner.current - scanner.start;
+    for (int i = 0; i < len; ++i) {
+        if (scanner.start[i] < 'a' || scanner.start[i] > 'z')
+            return TOKEN_IDENTIFIER;
+        Node* child = p->children[scanner.start[i] - 'a'];
+        if (child == NULL) {
+            return TOKEN_IDENTIFIER;
+        } else if (i == len - 1) {
+            return child->tokenType != -1 ? child->tokenType : TOKEN_IDENTIFIER;
+        }
+        p = child;
+    }
+    return TOKEN_IDENTIFIER;
+}
+
+static Token identifier() {
+    while (isAlpha(peek()) || isDigit(peek())) advance();
+    return makeToken(identifierType());
+}
+
 Token scanToken() {
     skipWhitespace();
     scanner.start = scanner.current;
     if (isAtEnd()) return makeToken(TOKEN_EOF);
 
     char c = advance();
-
+    if (isAlpha(c)) return identifier();
     if (isDigit(c)) return number();
 
     switch (c) {
