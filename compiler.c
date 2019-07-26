@@ -191,6 +191,10 @@ static void number() {
     emitConstant(NUMBER_VAL(value));
 }
 
+static void string() {
+    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 static void unary() {
     TokenType operatorType = parser.previous.type;
     parsePrecedence(PREC_UNARY);
@@ -210,21 +214,21 @@ ParseRule rules[] = {
         {NULL,     NULL, PREC_NONE},       // TOKEN_RIGHT_BRACE
         {NULL,     NULL, PREC_NONE},       // TOKEN_COMMA
         {NULL,     NULL, PREC_CALL},       // TOKEN_DOT
-        {unary,  binary, PREC_TERM},       // TOKEN_MINUS
-        {NULL,   binary, PREC_TERM},       // TOKEN_PLUS
+        {unary, binary,  PREC_TERM},       // TOKEN_MINUS
+        {NULL,  binary,  PREC_TERM},       // TOKEN_PLUS
         {NULL,     NULL, PREC_NONE},       // TOKEN_SEMICOLON
-        {NULL,   binary, PREC_FACTOR},     // TOKEN_SLASH
-        {NULL,   binary, PREC_FACTOR},     // TOKEN_STAR
+        {NULL,  binary,  PREC_FACTOR},     // TOKEN_SLASH
+        {NULL,  binary,  PREC_FACTOR},     // TOKEN_STAR
         {unary,    NULL, PREC_NONE},       // TOKEN_BANG
-        {NULL,   binary, PREC_EQUALITY},   // TOKEN_BANG_EQUAL
+        {NULL,  binary,  PREC_EQUALITY},   // TOKEN_BANG_EQUAL
         {NULL,     NULL, PREC_NONE},       // TOKEN_EQUAL
-        {NULL,   binary, PREC_EQUALITY},   // TOKEN_EQUAL_EQUAL
-        {NULL,   binary, PREC_COMPARISON}, // TOKEN_GREATER
-        {NULL,   binary, PREC_COMPARISON}, // TOKEN_GREATER_EQUAL
-        {NULL,   binary, PREC_COMPARISON}, // TOKEN_LESS
-        {NULL,   binary, PREC_COMPARISON}, // TOKEN_LESS_EQUAL
+        {NULL,  binary,  PREC_EQUALITY},   // TOKEN_EQUAL_EQUAL
+        {NULL,  binary,  PREC_COMPARISON}, // TOKEN_GREATER
+        {NULL,  binary,  PREC_COMPARISON}, // TOKEN_GREATER_EQUAL
+        {NULL,  binary,  PREC_COMPARISON}, // TOKEN_LESS
+        {NULL,  binary,  PREC_COMPARISON}, // TOKEN_LESS_EQUAL
         {NULL,     NULL, PREC_NONE},       // TOKEN_IDENTIFIER
-        {NULL,     NULL, PREC_NONE},       // TOKEN_STRING
+        {string,   NULL, PREC_NONE},       // TOKEN_STRING
         {number,   NULL, PREC_NONE},       // TOKEN_NUMBER
         {NULL,     NULL, PREC_AND},        // TOKEN_AND
         {NULL,     NULL, PREC_NONE},       // TOKEN_CLASS
