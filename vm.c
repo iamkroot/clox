@@ -9,10 +9,9 @@
 #include "common.h"
 #include "compiler.h"
 #include "debug.h"
-#include "vm.h"
+#include "object.h"
 #include "memory.h"
-
-VM vm;
+#include "vm.h"
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -32,10 +31,11 @@ static void runtimeError(const char* format, ...) {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM() {
-
+    freeObjects();
 }
 
 void push(Value value) {
