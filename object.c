@@ -41,6 +41,12 @@ ObjFunction* newFunction() {
     return func;
 }
 
+ObjNative* newNative(NativeFn function) {
+    ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+    native->function = function;
+    return native;
+}
+
 static uint32_t hashString(const char* key, int length) {
     uint32_t hash = 2166136261u;
 
@@ -81,6 +87,8 @@ void printObject(Value value) {
                 break;
             }
             printf("<fn %s>", AS_FUNCTION(value)->name->chars);
+            break;
+        case OBJ_NATIVE: printf("<native fn>");
             break;
         case OBJ_STRING: printf("%s", AS_CSTRING(value));
             break;
