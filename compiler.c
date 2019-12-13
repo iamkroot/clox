@@ -534,7 +534,7 @@ static void function(FunctionType type) {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
     block();
     ObjFunction* func = endCompiler();
-    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(func)));
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(func)));
 }
 
 static void funcDeclaration() {
