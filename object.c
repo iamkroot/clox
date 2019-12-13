@@ -42,6 +42,7 @@ ObjClosure* newClosure(ObjFunction* function) {
 ObjFunction* newFunction() {
     ObjFunction* func = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     func->arity = 0;
+    func->upvalueCount = 0;
     func->name = NULL;
     initChunk(&func->chunk);
     return func;
