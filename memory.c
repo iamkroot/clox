@@ -20,7 +20,8 @@ static void freeObject(Obj* obj) {
     switch (obj->type) {
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)obj;
-            FREE(OBJ_CLOSURE, closure);
+            FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->upvalueCount);
+            FREE(ObjClosure, obj);
             break;
         }
         case OBJ_FUNCTION: {
@@ -37,6 +38,10 @@ static void freeObject(Obj* obj) {
             ObjString* string = (ObjString*)obj;
             FREE_ARRAY(char, string->chars, string->length + 1);
             FREE(ObjString, obj);
+            break;
+        }
+        case OBJ_UPVALUE: {
+            FREE(ObjUpvalue, obj);
             break;
         }
     }
