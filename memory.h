@@ -21,6 +21,12 @@
 
 void* reallocate(void* previous, size_t oldSize, size_t newSize);
 
+void markObject(Obj* obj);
+
+void markValue(Value value);
+
+void collectGarbage();
+
 void freeObjects();
 
 #endif //CLOX_MEMORY_H
