@@ -55,6 +55,8 @@ static Value clockNative(int argCount, Value* args) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    vm.grayCount = vm.grayCapacity = 0;
+    vm.grayStack = NULL;
     initTable(&vm.strings);
     initTable(&vm.globals);
     defineNative("clock", clockNative);
