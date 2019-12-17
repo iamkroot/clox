@@ -16,11 +16,18 @@
 
 #endif
 
+#define GC_HEAP_GROW_FACTOR 2
+
+
 void* reallocate(void* previous, size_t oldSize, size_t newSize) {
+    vm.bytesAllocated += newSize - oldSize;
     if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
         collectGarbage();
 #endif
+    }
+    if (vm.bytesAllocated > vm.nextGC) {
+        collectGarbage();
     }
     if (newSize == 0) {
         free(previous);
@@ -141,7 +148,7 @@ static void traceRefs() {
 static void sweep() {
     Obj* previous = NULL;
     Obj* obj = vm.objects;
-    while (obj!=NULL) {
+    while (obj != NULL) {
         if (obj->isMarked) {
             obj->isMarked = false;
             previous = obj;
@@ -160,7 +167,11 @@ static void sweep() {
 }
 
 static void markRoots() {
-    for (Value* slot = 0; slot < vm.stackTop; ++slot) {
+#ifdef  DEBUG_LOG_GC
+    printf("mark roots\n");
+//    printf("%ld", vm.stack);
+#endif
+    for (Value* slot = vm.stack; slot < vm.stackTop; ++slot) {
         markValue(*slot);
     }
     for (int i = 0; i < vm.frameCount; ++i) {
@@ -176,12 +187,16 @@ static void markRoots() {
 void collectGarbage() {
 #ifdef  DEBUG_LOG_GC
     printf("-- gc begin\n");
+    size_t before = vm.bytesAllocated;
 #endif
     markRoots();
     traceRefs();
     tableRemoveWhite(&vm.strings);
     sweep();
+    vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 #ifdef  DEBUG_LOG_GC
     printf("-- gc end\n");
+    printf("   collected %ld bytes (from %ld to %ld) next at %ld\n", before - vm.bytesAllocated, before,
+           vm.bytesAllocated, vm.nextGC);
 #endif
 }
