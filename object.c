@@ -40,6 +40,7 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
 ObjClass* newClass(ObjString* name) {
     ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
+    initTable(&klass->methods);
     return klass;
 }
 

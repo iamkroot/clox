@@ -42,6 +42,8 @@ static void freeObject(Obj* obj) {
 #endif
     switch (obj->type) {
         case OBJ_CLASS: {
+            ObjClass* klass = (ObjClass*)obj;
+            freeTable(&klass->methods);
             FREE(ObjClass, obj);
             break;
         }
@@ -128,6 +130,7 @@ static void blackenObject(Obj* obj) {
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)obj;
             markObject((Obj*)klass->name);
+            markTable(&klass->methods);
             break;
         }
         case OBJ_CLOSURE: {
