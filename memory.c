@@ -203,7 +203,6 @@ static void sweep() {
 static void markRoots() {
 #ifdef  DEBUG_LOG_GC
     printf("mark roots\n");
-//    printf("%ld", vm.stack);
 #endif
     for (Value* slot = vm.stack; slot < vm.stackTop; ++slot) {
         markValue(*slot);
@@ -216,6 +215,7 @@ static void markRoots() {
     }
     markTable(&vm.globals);
     markCompilerRoots();
+    markObject((Obj*)vm.initString);
 }
 
 void collectGarbage() {
