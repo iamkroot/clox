@@ -77,6 +77,7 @@ typedef struct Compiler {
 typedef struct ClassCompiler {
     struct ClassCompiler* enclosing;
     Token name;
+    bool hasSuperclass;
 } ClassCompiler;
 
 Parser parser;
@@ -381,6 +382,35 @@ static void variable(bool canAssign) {
     namedVariable(parser.previous, canAssign);
 }
 
+static Token syntheticToken(const char* text) {
+    Token token;
+    token.start = text;
+    token.length = (int)strlen(text);
+    return token;
+}
+
+static void super_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Cannot use 'super' outside of a class.");
+    } else if (!currentClass->hasSuperclass) {
+        error("Cannot use 'super' in a class with no superclass.");
+    }
+    consume(TOKEN_DOT, "Expect '.' after super keyword.");
+    consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    namedVariable(syntheticToken("this"), false);
+    if (match(TOKEN_LEFT_PAREN)) {
+        uint8_t argCount = argumentList();
+        namedVariable(syntheticToken("super"), false);
+        emitBytes(OP_SUPER_INVOKE, name);
+        emitByte(argCount);
+    } else {
+        namedVariable(syntheticToken("super"), false);
+        emitBytes(OP_GET_SUPER, name);
+    }
+}
+
 static void this_(bool canAssign) {
     if (currentClass == NULL) {
         error("Cannot use 'this' outside class.");
@@ -435,7 +465,7 @@ ParseRule rules[] = {
         {NULL,     or_,    PREC_OR},         // TOKEN_OR
         {NULL,     NULL,   PREC_NONE},       // TOKEN_PRINT
         {NULL,     NULL,   PREC_NONE},       // TOKEN_RETURN
-        {NULL,     NULL,   PREC_NONE},       // TOKEN_SUPER
+        {super_,   NULL,   PREC_NONE},       // TOKEN_SUPER
         {this_,    NULL,   PREC_NONE},       // TOKEN_THIS
         {literal,  NULL,   PREC_NONE},       // TOKEN_TRUE
         {NULL,     NULL,   PREC_NONE},       // TOKEN_VAR
@@ -661,6 +691,7 @@ static void classDeclaration() {
 
     ClassCompiler classCompiler;
     classCompiler.name = className;
+    classCompiler.hasSuperclass = false;
     classCompiler.enclosing = currentClass;
     currentClass = &classCompiler;
 
@@ -670,8 +701,14 @@ static void classDeclaration() {
         if (identifiersEqual(&className, &parser.previous)) {
             error("A class cannot inherit from itself.");
         }
+
+        beginScope();
+        addLocal(syntheticToken("super"));
+        defineVariable(0);
+
         namedVariable(className, false);
         emitByte(OP_INHERIT);
+        classCompiler.hasSuperclass = true;
     }
 
     namedVariable(className, false);
@@ -681,6 +718,10 @@ static void classDeclaration() {
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after function body.");
     emitByte(OP_POP);
+
+    if (classCompiler.hasSuperclass) {
+        endScope();
+    }
     currentClass = currentClass->enclosing;
 }
 
