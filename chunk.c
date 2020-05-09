@@ -2,8 +2,6 @@
 // Created by kroot on 15/7/19.
 //
 
-#include <stdlib.h>
-
 #include "chunk.h"
 #include "memory.h"
 #include "value.h"
