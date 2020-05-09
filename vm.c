@@ -60,9 +60,9 @@ void initVM() {
     vm.grayCount = vm.grayCapacity = 0;
     vm.grayStack = NULL;
     initTable(&vm.strings);
+    initTable(&vm.globals);
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
-    initTable(&vm.globals);
     defineNative("clock", clockNative);
 }
 
